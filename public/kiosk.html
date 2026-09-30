@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check in · Beacon</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔆</text></svg>">
+  <style>
+    .arrival { display: flex; gap: .8rem; align-items: center; background: var(--surface); border-radius: 16px; padding: .8rem; border: 1px solid var(--border); animation: slidein .4s ease; }
+    .arrival .n { font-weight: 700; font-size: 1.05rem; }
+    .announce { font-size: 1.4rem; font-weight: 700; background: var(--accent-2); color: #fff; border-radius: 16px; padding: 1rem 1.3rem; }
+  </style>
+</head>
+<body>
+  <main class="kiosk" id="kiosk"><div class="empty">Loading…</div></main>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module">
+    import { $, esc, api, avatar } from '/js/common.js';
+
+    const code = location.pathname.split('/')[2].toUpperCase();
+    let data;
+
+    async function load() {
+      data = await api(`/api/kiosk/${code}`);
+      render();
+    }
+
+    function render() {
+      $('#kiosk').innerHTML = `
+        <div style="text-align:center">
+          <div class="brand" style="justify-content:center;font-size:1.6rem"><span class="logo"></span> Beacon</div>
+          <h1 style="margin-top:1rem">${esc(data.event.name)}</h1>
+          <p class="muted" style="font-size:1.2rem">Scan to check in and see who you should meet</p>
+          <div class="qr" style="margin:1.5rem auto"><img src="/api/events/${code}/qr.svg" alt="Check-in QR code"></div>
+          <div style="font-size:1.3rem">or go to <b>${esc(data.joinUrl.replace(/^https?:\/\//, ''))}</b></div>
+        </div>
+        <div class="stack">
+          <div class="row" style="gap:3vw;align-items:flex-end">
+            <div><div class="count">${data.here}</div><div class="muted" style="font-size:1.2rem">people here now</div></div>
+            <div><div class="count" style="color:var(--accent-2)">${data.connections}</div><div class="muted" style="font-size:1.2rem">connections made</div></div>
+          </div>
+          ${data.announcement ? `<div class="announce">📣 ${esc(data.announcement.text)}</div>` : ''}
+          <h2 style="margin-top:1.5rem">Just arrived</h2>
+          <div class="arrivals">${data.recent.map(p => `<div class="arrival">${avatar(p)}<div><div class="n">${esc(p.name)}</div><div class="muted small">${esc(p.headline)}</div></div></div>`).join('')}</div>
+          <h2 style="margin-top:1.5rem">People here are talking about</h2>
+          <div class="tags">${data.topTags.map(([t, n]) => `<span class="tag hit" style="font-size:1rem;padding:.35rem .8rem">${esc(t)} · ${n}</span>`).join('')}</div>
+        </div>`;
+    }
+
+    const socket = io({ auth: { kiosk: true, code } });
+    socket.on('stats', s => { Object.assign(data, s); render(); });
+    socket.on('announcement', a => { data.announcement = a; render(); });
+    load();
+  </script>
+</body>
+</html>

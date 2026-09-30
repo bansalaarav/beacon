@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Beacon — know who to talk to</title>
+  <meta name="description" content="Real-time attendee discovery and matchmaking for networking events.">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔆</text></svg>">
+</head>
+<body>
+  <main class="landing">
+    <div class="brand"><span class="logo"></span> Beacon</div>
+
+    <section class="hero">
+      <h1>Walk into any room<br>knowing who to talk to.</h1>
+      <p class="lead">Beacon shows who's at your event right now, ranks the people most worth meeting and tells you why,
+        then helps you find them in the crowd. Organizers get a live attendance and matchmaking dashboard.</p>
+      <div class="row wrap" style="margin-top:1.2rem">
+        <a class="btn" href="/e/DEMO24">Try the demo as an attendee</a>
+        <a class="btn btn-ghost" href="/o/DEMO24#key=demo-organizer-key">Open the demo dashboard</a>
+      </div>
+    </section>
+
+    <div class="grid-2">
+      <form class="card" id="join-form">
+        <h2>Join an event</h2>
+        <p class="muted">Scan the QR code at the door, or enter the 6-character event code.</p>
+        <div class="field"><input class="code-input" id="join-code" maxlength="6" placeholder="DEMO24" autocomplete="off" required></div>
+        <button class="btn-block">Check in →</button>
+        <p class="small muted" id="join-error" style="margin-top:.6rem"></p>
+      </form>
+
+      <form class="card" id="host-form">
+        <h2>Host an event</h2>
+        <div class="field"><label for="ev-name">Event name</label><input id="ev-name" required placeholder="Spring Founders Mixer"></div>
+        <div class="field"><label for="ev-venue">Venue</label><input id="ev-venue" placeholder="The Loft, 3rd floor"></div>
+        <div class="field"><label for="ev-desc">Description</label><textarea id="ev-desc" rows="2" placeholder="Who should come and what to expect"></textarea></div>
+        <div class="field"><label for="ev-zones">Areas in the room <span class="hint">(comma separated, so people can say where they are)</span></label>
+          <input id="ev-zones" placeholder="Entrance, Bar, Main floor, Patio"></div>
+        <button class="btn-block">Create event</button>
+      </form>
+    </div>
+
+    <h2 style="margin-top:2.5rem">How Beacon solves the “who is that?” problem</h2>
+    <div class="grid-3" style="margin-top:1rem">
+      <div class="card feature"><h3>🟢 Live presence</h3><p class="muted small">Real-time list of who's here, who just arrived and who left. Nobody has to refresh, and people who close the app get checked out automatically.</p></div>
+      <div class="card feature"><h3>✦ Explainable matches</h3><p class="muted small">Pairs your needs with other people's offers, weights rare shared interests higher, and says why each person is worth meeting.</p></div>
+      <div class="card feature"><h3>🧥 Spot me</h3><p class="muted small">Every profile has a photo, a colour and a line like “red hoodie, near the bar”, so you can actually find the person.</p></div>
+      <div class="card feature"><h3>🔆 Beacon flash</h3><p class="muted small">Can't find them in the crowd? Both phones flash the same colour so you can wave each other down.</p></div>
+      <div class="card feature"><h3>💬 AI icebreakers</h3><p class="muted small">Claude writes an opening line from both profiles. It falls back to templates when offline.</p></div>
+      <div class="card feature"><h3>🪪 Scan to connect</h3><p class="muted small">Scan someone's badge QR or type their 4-digit code to swap contacts instantly. Export everyone as vCards afterwards.</p></div>
+      <div class="card feature"><h3>🔀 Mixer rounds</h3><p class="muted small">Organizers make well-matched small groups with one tap. Each person gets a table and a topic on their phone.</p></div>
+      <div class="card feature"><h3>📊 Organizer radar</h3><p class="muted small">Live attendance, zone heatmap, supply and demand gaps, people nobody has talked to yet, and one-tap intros.</p></div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { $, api, storage } from '/js/common.js';
+
+    $('#join-form').onsubmit = async e => {
+      e.preventDefault();
+      const code = $('#join-code').value.trim().toUpperCase();
+      try {
+        await api(`/api/events/${code}`);
+        location.href = `/e/${code}`;
+      } catch {
+        $('#join-error').textContent = 'No event with that code. Check the sign at the door.';
+      }
+    };
+
+    $('#host-form').onsubmit = async e => {
+      e.preventDefault();
+      const { code, organizerKey } = await api('/api/events', {
+        method: 'POST',
+        body: { name: $('#ev-name').value, venue: $('#ev-venue').value, description: $('#ev-desc').value, zones: $('#ev-zones').value },
+      });
+      storage.set(`org:${code}`, organizerKey);
+      location.href = `/o/${code}#key=${organizerKey}`;
+    };
+  </script>
+</body>
+</html>

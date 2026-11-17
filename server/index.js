@@ -23,6 +23,8 @@ store.load();
 if (!process.env.DISABLE_DEMO && !store.eventByCode('DEMO24')) seedDemo(store);
 
 const app = express();
+// Hosts like Render terminate HTTPS at a proxy; trust it so QR codes use https:// URLs.
+app.set('trust proxy', true);
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 1e6 });
 

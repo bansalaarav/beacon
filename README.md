@@ -158,9 +158,19 @@ tests/
 - **Events of any type**: tags are free-form with synonym folding (`ML` → `machine learning`, `investors` → `venture capital`), so the same app works for a tech mixer, a college club fair or an industry conference. Areas of the room are configurable per event.
 - **Scaling out**: `store.js` is the only stateful module. Swap it for Postgres (profiles, waves) + Redis (presence), and add `@socket.io/redis-adapter` to run many instances behind a load balancer. Details are in [ARCHITECTURE.md](docs/ARCHITECTURE.md#scaling-plan).
 
-## 🎬 Demo video
+## ☁️ Deploy
 
-A shot-by-shot script for the 1–2 minute demo is in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+Beacon is a single Node process with WebSockets, so any host that runs a long-lived Node server works. The quickest is **Render** (free tier):
+
+1. Push this repo to GitHub.
+2. On [render.com](https://render.com), choose **New → Blueprint** and pick the repo. It reads [`render.yaml`](render.yaml), so there's nothing to configure.
+   (Or **New → Web Service** with build command `npm install` and start command `npm start`.)
+3. Optional: add `ANTHROPIC_API_KEY` under **Environment** to turn on Claude icebreakers.
+4. Open `https://<your-app>.onrender.com`. QR codes automatically use that URL.
+
+Notes:
+- On Render's free tier the app sleeps after 15 minutes idle (the first visit then takes ~30 s) and the disk is wiped on restart, so events don't survive a redeploy. The `DEMO24` demo event is recreated automatically. For a real event, use a paid instance and attach a persistent disk mounted at `/data` with `DATA_FILE=/data/db.json`.
+- Railway, Fly.io or any VPS work the same way: `npm install`, then `npm start`. The app listens on `PORT`.
 
 ## License
 MIT
